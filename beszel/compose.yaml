@@ -1,0 +1,30 @@
+services:
+  beszel:
+    image: henrygd/beszel:latest
+    container_name: beszel
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    labels:
+      tsdproxy.enable: "true"
+      tsdproxy.name: "beszel_agent"
+      tsdproxy.container_port: 8090
+    volumes:
+      - ${DATA_LOCATION}:/beszel_data
+      - ${SOCKET_LOCATION}:/beszel_socket
+
+  beszel-agent:
+    image: henrygd/beszel-agent:latest
+    container_name: beszel-agent
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ${SOCKET_LOCATION}:/beszel_socket
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      LISTEN: /beszel_socket/beszel.sock
+      KEY: ${AGENT_KEY}
+
+networks:
+  default:
+    name: beszel
