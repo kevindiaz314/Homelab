@@ -1,6 +1,6 @@
 services:
   pangolin:
-    image: docker.io/fosrl/pangolin:latest
+    image: fosrl/pangolin-node:latest
     container_name: pangolin
     restart: unless-stopped
     volumes:
