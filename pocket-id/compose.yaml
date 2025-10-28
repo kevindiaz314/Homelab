@@ -1,8 +1,10 @@
 services:
   pocket-id:
-    image: ghcr.io/pocket-id/pocket-id:latest
+    image: ghcr.io/pocket-id/pocket-id:v1
     container_name: pocket-id
     restart: unless-stopped
+    environment:
+      APP_URL: ${APP_URL}
     volumes:
       - ${DATA_LOCATION}:/app/data
     healthcheck:
