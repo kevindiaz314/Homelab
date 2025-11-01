@@ -1,61 +1,89 @@
 services:
-  pangolin:
-    image: fosrl/pangolin-node:latest
-    container_name: pangolin
-    restart: unless-stopped
-    volumes:
-      - ${CONFIG_LOCATION}:/app/config
-      - pangolin-data:/var/certificates
-      - pangolin-data:/var/dynamic
+  crowdsec:
+    command: -t
+    container_name: crowdsec
+    environment:
+      COLLECTIONS: crowdsecurity/traefik crowdsecurity/appsec-virtual-patching crowdsecurity/appsec-generic-rules
+      ENROLL_INSTANCE_NAME: pangolin-crowdsec
+      ENROLL_TAGS: docker
+      GID: "1000"
+      PARSERS: crowdsecurity/whitelists
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/api/v1/"]
-      interval: "10s"
-      timeout: "10s"
+      interval: 10s
       retries: 15
-
-  gerbil:
-    image: docker.io/fosrl/gerbil:latest
-    container_name: gerbil
+      test:
+        - CMD
+        - cscli
+        - capi
+        - status
+      timeout: 10s
+    image: docker.io/crowdsecurity/crowdsec:latest
+    labels:
+      - traefik.enable=false
+    ports:
+      - 6060:6060
     restart: unless-stopped
-    depends_on:
-      pangolin:
-        condition: service_healthy
-    command:
-      - --reachableAt=http://gerbil:3003
-      - --generateAndSaveKeyTo=/var/config/key
-      - --remoteConfig=http://pangolin:3001/api/v1/
     volumes:
-      - ${CONFIG_LOCATION}:/var/config
+      - ${CONFIG_LOCATION}/crowdsec:/etc/crowdsec
+      - ${CONFIG_LOCATION}/crowdsec/db:/var/lib/crowdsec/data
+      - ${CONFIG_LOCATION}/traefik/logs:/var/log/traefik
+  gerbil:
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
-    ports:
-      - "51820:51820/udp"
-      - "21820:21820/udp"
-      - "443:8443"
-      - "80:80"
-
-  traefik:
-    image: docker.io/traefik:latest
-    container_name: traefik
-    restart: unless-stopped
-    network_mode: service:gerbil
+    command:
+      - --reachableAt=http://gerbil:3004
+      - --generateAndSaveKeyTo=/var/config/key
+      - --remoteConfig=http://pangolin:3001/api/v1/
+    container_name: gerbil
     depends_on:
       pangolin:
         condition: service_healthy
+    image: docker.io/fosrl/gerbil:1.2.2
+    ports:
+      - 51820:51820/udp
+      - 21820:21820/udp
+      - 443:443
+      - 80:80
+    restart: unless-stopped
+    volumes:
+      - ${CONFIG_LOCATION}:/var/config
+  pangolin:
+    container_name: pangolin
+    healthcheck:
+      interval: 10s
+      retries: 15
+      test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:3001/api/v1/
+      timeout: 10s
+    image: docker.io/fosrl/pangolin:1.11.1
+    restart: unless-stopped
+    volumes:
+      - ${CONFIG_LOCATION}:/app/config
+  traefik:
     command:
       - --configFile=/etc/traefik/traefik_config.yml
+    container_name: traefik
+    depends_on:
+      crowdsec:
+        condition: service_healthy
+      pangolin:
+        condition: service_healthy
+    image: docker.io/traefik:v3.5
+    network_mode: service:gerbil
+    restart: unless-stopped
     volumes:
       - ${CONFIG_LOCATION}/traefik:/etc/traefik:ro
       - ${CONFIG_LOCATION}/letsencrypt:/letsencrypt
       - ${CONFIG_LOCATION}/traefik/logs:/var/log/traefik
-      - pangolin-data:/var/certificates:ro
-      - pangolin-data:/var/dynamic:ro
+
+volumes:
+  pangolin_data:
 
 networks:
   default:
     driver: bridge
     name: pangolin
-
-volumes:
-  pangolin-data:
