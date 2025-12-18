@@ -20,9 +20,6 @@ services:
     restart: always
     healthcheck:
       disable: false
-    labels:
-      tsdproxy.enable: "true"
-      tsdproxy.name: "immich"
 
   immich-machine-learning:
     container_name: immich_machine_learning
