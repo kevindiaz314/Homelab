@@ -12,7 +12,7 @@ services:
       - "8080:8080"
     environment:
       APACHE_PORT: 11000
-      APACHE_ADDITIONAL_NETWORK: pangolin
+      APACHE_ADDITIONAL_NETWORK: newt
       BORG_RETENTION_POLICY: --keep-within=5d --keep-weekly=2 --keep-monthly=3
       NEXTCLOUD_DATADIR: ${DATA_LOCATION}
 

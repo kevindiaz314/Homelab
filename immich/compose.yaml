@@ -4,7 +4,7 @@ services:
     image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
     networks:
       - default
-      - pangolin
+      - newt
     volumes:
       - ${UPLOAD_LOCATION}:/data
       - /etc/localtime:/etc/localtime:ro
@@ -69,5 +69,5 @@ volumes:
 networks:
   default:
     name: immich
-  pangolin:
+  newt:
     external: true
