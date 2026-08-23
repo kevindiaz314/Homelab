@@ -12,6 +12,8 @@ services:
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_DATABASE_NAME: ${DB_DATABASE_NAME}
+    env_file:
+      - .env
     ports:
       - '2283:2283'
     depends_on:
@@ -34,6 +36,8 @@ services:
     image: ghcr.io/immich-app/immich-machine-learning:${IMMICH_VERSION:-release}
     volumes:
       - model-cache:/cache
+    env_file:
+      - .env
     restart: always
     healthcheck:
       disable: false
